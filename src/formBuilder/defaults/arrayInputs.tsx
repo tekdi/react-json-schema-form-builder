@@ -125,6 +125,7 @@ const InnerCard: CardComponentType = ({ parameters, onChange, mods }) => {
             'ui:*items': uischema.item || {},
           });
         },
+        onSave: () => {}, // ArrayInputs doesn't need onSave, pass no-op function
         path: elementId,
         definitionData,
         definitionUi,

@@ -102,6 +102,10 @@ export default function ValueSelector({
                 placeholder='String value'
                 type='text'
                 onChange={(ev: any) => {
+                  // Only update the input value, not the schema
+                  ev.target.value = ev.target.value;
+                }}
+                onBlur={(ev: any) => {
                   const newVal = ev.target.value;
                   const oldCombo = possibility.value.enum[index];
                   onChange({
@@ -125,7 +129,7 @@ export default function ValueSelector({
                 value={val || ''}
                 placeholder='Number value'
                 type='number'
-                onChange={(ev: any) => {
+                onBlur={(ev: any) => {
                   const newVal = Number.parseFloat(ev.target.value);
                   const oldCombo = possibility.value.enum[index];
                   onChange({
