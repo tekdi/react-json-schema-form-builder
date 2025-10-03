@@ -54,6 +54,7 @@ export default function CardGallery({
       });
       onChange(newDefinitions.properties, newUi);
     },
+    onSave: () => {}, // CardGallery doesn't need onSave, pass no-op function
     path: 'definitions',
     definitionData: definitionSchema,
     definitionUi: definitionUiSchema,

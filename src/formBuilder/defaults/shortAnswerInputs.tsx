@@ -231,20 +231,23 @@ const CardShortAnswerParameterInputs: CardComponentType = ({
 };
 
 const ShortAnswerField: CardComponentType = ({ parameters, onChange }) => {
+  const [defaultValue, setDefaultValue] = React.useState(
+    parameters.default || '',
+  );
+
   return (
     <React.Fragment>
       <h5>Default value</h5>
       <Input
-        value={
-          parameters.default as string | number | readonly string[] | undefined
-        }
+        value={defaultValue as string | number | readonly string[] | undefined}
         placeholder='Default'
         type={
           (formatTypeDictionary[
             parameters.format as FormatTypeDictionaryKey
           ] as 'email' | 'url') || 'text'
         }
-        onChange={(ev) => onChange({ ...parameters, default: ev.target.value })}
+        onChange={(ev) => setDefaultValue(ev.target.value)}
+        onBlur={(ev) => onChange({ ...parameters, default: ev.target.value })}
         className='card-text'
       />
     </React.Fragment>
@@ -252,16 +255,19 @@ const ShortAnswerField: CardComponentType = ({ parameters, onChange }) => {
 };
 
 const Password: CardComponentType = ({ parameters, onChange }) => {
+  const [defaultValue, setDefaultValue] = React.useState(
+    parameters.default || '',
+  );
+
   return (
     <React.Fragment>
       <h5>Default password</h5>
       <Input
-        value={
-          parameters.default as string | number | readonly string[] | undefined
-        }
+        value={defaultValue as string | number | readonly string[] | undefined}
         placeholder='Default'
         type='password'
-        onChange={(ev) => onChange({ ...parameters, default: ev.target.value })}
+        onChange={(ev) => setDefaultValue(ev.target.value)}
+        onBlur={(ev) => onChange({ ...parameters, default: ev.target.value })}
         className='card-text'
       />
     </React.Fragment>

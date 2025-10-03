@@ -76,7 +76,9 @@ const useStyles = createUseStyles({
   },
   cardInteractions: {
     margin: '.5em 1.5em',
-    textAlign: 'left',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     '& .fa': {
       marginRight: '1em',
       borderRadius: '4px',
@@ -87,13 +89,52 @@ const useStyles = createUseStyles({
     '& .fa-arrow-up, .fa-arrow-down': { marginRight: '.5em' },
     '& .fa-trash': { border: '1px solid #DE5354', color: '#DE5354' },
     '& .fb-checkbox': { display: 'inline-block' },
-    '& .interactions-left, & .interactions-right': {
-      display: 'inline-block',
-      width: '48%',
-      margin: '0 auto',
+    '& .interactions-left': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1em',
     },
-    '& .interactions-left': { textAlign: 'left' },
-    '& .interactions-right': { textAlign: 'right' },
+    '& .interactions-right': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1em',
+    },
+    '& .save-button': {
+      backgroundColor: '#007D80',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50px',
+      padding: '4px 12px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      '&:hover': {
+        backgroundColor: '#005f62',
+      },
+      '&:focus': {
+        outline: 'none',
+        boxShadow: '0 0 0 2px rgba(0, 125, 128, 0.3)',
+      },
+    },
+    '& .custom-save-btn': {
+      backgroundColor: '#007D80 !important',
+      color: 'white !important',
+      border: 'none !important',
+      borderRadius: '50px !important',
+      padding: '4px 12px !important',
+      cursor: 'pointer !important',
+      fontSize: '14px !important',
+      fontWeight: 'bold !important',
+      boxShadow: 'none !important',
+      outline: 'none !important',
+      '&:hover': {
+        backgroundColor: '#005f62 !important',
+      },
+      '&:focus': {
+        outline: 'none !important',
+        boxShadow: '0 0 0 2px rgba(0, 125, 128, 0.3) !important',
+      },
+    },
   },
 });
 
@@ -103,6 +144,7 @@ export default function Card({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onSave,
   TypeSpecificParameters,
   addElem,
   cardOpen,
@@ -155,7 +197,7 @@ export default function Card({
                 placement='top'
                 target={`${elementId}_moveupbiginfo`}
               >
-                Move form element up
+                Move up
               </UncontrolledTooltip>
               <span id={`${elementId}_movedownbiginfo`}>
                 <FontAwesomeIcon
@@ -167,7 +209,7 @@ export default function Card({
                 placement='top'
                 target={`${elementId}_movedownbiginfo`}
               >
-                Move form element down
+                Move down
               </UncontrolledTooltip>
             </span>
           </React.Fragment>
@@ -186,38 +228,85 @@ export default function Card({
           />
         </div>
         <div className={classes.cardInteractions}>
-          <span id={`${elementId}_editinfo`}>
-            <FontAwesomeIcon
-              icon={faPencilAlt}
-              onClick={() => setModalOpen(true)}
+          <div className='interactions-left'>
+            <span id={`${elementId}_editinfo`}>
+              <FontAwesomeIcon
+                icon={faPencilAlt}
+                onClick={() => setModalOpen(true)}
+              />
+            </span>
+            <UncontrolledTooltip
+              placement='top'
+              target={`${elementId}_editinfo`}
+            >
+              Additional configurations for this form element
+            </UncontrolledTooltip>
+            <span id={`${elementId}_trashinfo`}>
+              <FontAwesomeIcon
+                icon={faTrash}
+                onClick={() => onDelete && onDelete()}
+              />
+            </span>
+            <UncontrolledTooltip
+              placement='top'
+              target={`${elementId}_trashinfo`}
+            >
+              Delete form element
+            </UncontrolledTooltip>
+            <FBCheckbox
+              onChangeValue={() =>
+                onChange({
+                  ...componentProps,
+                  required: !componentProps.required,
+                })
+              }
+              isChecked={!!componentProps.required}
+              label='Required'
+              id={`${elementId}_required`}
             />
-          </span>
-          <UncontrolledTooltip placement='top' target={`${elementId}_editinfo`}>
-            Additional configurations for this form element
-          </UncontrolledTooltip>
-          <span id={`${elementId}_trashinfo`}>
-            <FontAwesomeIcon
-              icon={faTrash}
-              onClick={() => onDelete && onDelete()}
-            />
-          </span>
-          <UncontrolledTooltip
-            placement='top'
-            target={`${elementId}_trashinfo`}
-          >
-            Delete form element
-          </UncontrolledTooltip>
-          <FBCheckbox
-            onChangeValue={() =>
-              onChange({
-                ...componentProps,
-                required: !componentProps.required,
-              })
-            }
-            isChecked={!!componentProps.required}
-            label='Required'
-            id={`${elementId}_required`}
-          />
+          </div>
+          <div className='interactions-right'>
+            <button
+              className='save-button custom-save-btn'
+              style={{
+                backgroundColor: '#007D80',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '4px 12px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: 'none',
+                outline: 'none',
+              }}
+              onClick={() => {
+                try {
+                  if (onSave) {
+                    onSave();
+                  } else {
+                    console.log(
+                      'onSave function not available - onSave is:',
+                      onSave,
+                    );
+                  }
+                } catch (error) {
+                  console.error('Error calling onSave:', error);
+                }
+              }}
+              onMouseEnter={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor =
+                  '#005f62';
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor =
+                  '#007D80';
+              }}
+              type='button'
+            >
+              Save
+            </button>
+          </div>
         </div>
         <CardModal
           componentProps={componentProps as CardComponentPropsType}

@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useCallback, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Select from 'react-select';
 import { createUseStyles } from 'react-jss';
@@ -97,16 +97,17 @@ export default function Section({
   schema,
   uischema,
   onChange,
-  onNameChange,
+  // onNameChange,
   onRequireToggle,
   onDependentsChange,
   onDelete,
   onMoveUp,
   onMoveDown,
+  onSave,
   path,
   definitionData,
   definitionUi,
-  hideKey,
+  hideKey, // eslint-disable-line @typescript-eslint/no-unused-vars
   reference,
   dependents,
   dependent,
@@ -134,9 +135,18 @@ export default function Section({
   // keep name in state to avoid losing focus
   const [keyName, setKeyName] = React.useState(name);
   const [keyError, setKeyError] = React.useState<null | string>(null);
-  // keep requirements in state to avoid rapid updates
+  const [titleState, setTitleState] = React.useState(schemaData.title || '');
   const [modalOpen, setModalOpen] = React.useState(false);
   const [elementId] = React.useState(getRandomId());
+  // Function to convert display name to camelCase for object name
+  const toCamelCase = (str: string): string => {
+    return str
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+        return index === 0 ? word.toLowerCase() : word.toUpperCase();
+      })
+      .replace(/\s+/g, '')
+      .replace(/[^a-zA-Z0-9]/g, ''); // Remove special characters
+  };
   const addProperties = {
     schema,
     uischema,
@@ -148,6 +158,51 @@ export default function Section({
   };
   const hideAddButton =
     schemaData.properties && Object.keys(schemaData.properties).length !== 0;
+
+  useEffect(() => {
+    if (schema?.title && schema.title !== titleState) {
+      setTitleState(schema.title);
+    }
+  }, [schema.title]);
+
+  const handleChange = useCallback(
+    (ev: any) => {
+      const newTitle = ev.target.value;
+      setTitleState(newTitle);
+
+      // Auto-generate camelCase object name from title
+      const newObjectName = toCamelCase(newTitle);
+
+      // Check if the new object name conflicts with existing names
+      let uniqueName = newObjectName;
+      console.log('uniqueName', newTitle, uniqueName);
+      if (
+        neighborNames &&
+        neighborNames.includes(newObjectName) &&
+        newObjectName !== name
+      ) {
+        let counter = 1;
+        while (neighborNames.includes(`${newObjectName}${counter}`)) {
+          counter++;
+        }
+        uniqueName = `${newObjectName}${counter}`;
+      }
+      setKeyName(uniqueName);
+      setKeyError(null);
+    },
+    [neighborNames, name, toCamelCase],
+  );
+
+  const handleBlur = useCallback(() => {
+    onChange(
+      {
+        ...schema,
+        title: titleState,
+        // name: keyName,
+      },
+      uischema,
+    );
+  }, [schema, uischema, titleState, keyName, onChange]);
 
   return (
     <React.Fragment>
@@ -179,7 +234,7 @@ export default function Section({
                 placement='top'
                 target={`${elementId}_moveupbiginfo`}
               >
-                Move form element up
+                Move up
               </UncontrolledTooltip>
               <span id={`${elementId}_movedownbiginfo`}>
                 <FontAwesomeIcon
@@ -191,7 +246,7 @@ export default function Section({
                 placement='top'
                 target={`${elementId}_movedownbiginfo`}
               >
-                Move form element down
+                Move down
               </UncontrolledTooltip>
             </span>
           </React.Fragment>
@@ -245,29 +300,14 @@ export default function Section({
               </h5>
               <FormGroup>
                 <Input
-                  invalid={keyError !== null}
+                  disabled={true}
                   value={keyName || ''}
-                  placeholder='Key'
+                  placeholder='Section Display Name'
                   type='text'
-                  onChange={(ev) => setKeyName(ev.target.value)}
-                  onBlur={(ev) => {
-                    const { value } = ev.target;
-                    if (
-                      value === name ||
-                      !(neighborNames && neighborNames.includes(value))
-                    ) {
-                      setKeyError(null);
-                      onNameChange(value);
-                    } else {
-                      setKeyName(name);
-                      setKeyError(`"${value}" is already in use.`);
-                      onNameChange(name);
-                    }
-                  }}
                   className='card-text'
-                  readOnly={hideKey}
+                  style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
                 />
-                <FormFeedback>{keyError}</FormFeedback>
+                {keyError && <FormFeedback>{keyError}</FormFeedback>}
               </FormGroup>
             </div>
             <div className='section-entry' data-test='section-display-name'>
@@ -288,18 +328,11 @@ export default function Section({
                 />
               </h5>
               <Input
-                value={schemaData.title || ''}
+                value={titleState}
                 placeholder='Title'
                 type='text'
-                onChange={(ev) =>
-                  onChange(
-                    {
-                      ...schema,
-                      title: ev.target.value,
-                    },
-                    uischema,
-                  )
-                }
+                onChange={handleChange}
+                onBlur={handleBlur}
                 className='card-text'
               />
             </div>
@@ -371,6 +404,14 @@ export default function Section({
                       schemaData: schema,
                       uiSchemaData: uischema,
                       onChange,
+                      onSave: onSave
+                        ? (fieldData, schema, uischema) =>
+                            onSave(
+                              fieldData,
+                              JSON.stringify(schema),
+                              JSON.stringify(uischema),
+                            )
+                        : () => {},
                       path,
                       definitionData,
                       definitionUi,

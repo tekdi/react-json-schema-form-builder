@@ -89,16 +89,17 @@ const CardLongAnswerParameterInputs: CardComponentType = ({
 };
 
 const LongAnswer: CardComponentType = ({ parameters, onChange }) => {
+  const [defaultValue, setDefaultValue] = useState(parameters.default || '');
+
   return (
     <React.Fragment>
       <h5>Default value</h5>
       <Input
-        value={
-          parameters.default as string | number | readonly string[] | undefined
-        }
+        value={defaultValue as string | number | readonly string[] | undefined}
         placeholder='Default'
         type='textarea'
-        onChange={(ev) => onChange({ ...parameters, default: ev.target.value })}
+        onChange={(ev) => setDefaultValue(ev.target.value)}
+        onBlur={(ev) => onChange({ ...parameters, default: ev.target.value })}
         className='card-textarea'
       />
     </React.Fragment>

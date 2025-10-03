@@ -58,6 +58,7 @@ export interface CardComponentPropsType {
   enum?: (number | string)[];
   enumNames?: string[] | null;
   description?: string;
+  isTooltip?: boolean;
 }
 
 export interface CardModalProps {
@@ -94,6 +95,7 @@ export interface SectionPropsType {
   onDelete: () => any;
   onMoveUp?: () => any;
   onMoveDown?: () => any;
+  onSave?: (fieldData: any, schema: string, uischema: string) => any;
   path: string;
   definitionData: { [key: string]: any };
   definitionUi: { [key: string]: any };
@@ -122,6 +124,7 @@ export interface CardPropsType {
   onDelete?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onSave?: () => void;
   TypeSpecificParameters: FunctionComponent<{
     parameters: CardComponentPropsType;
     onChange: (newParams: CardComponentPropsType) => void;

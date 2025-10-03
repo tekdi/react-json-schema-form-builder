@@ -1079,6 +1079,7 @@ export function generateElementComponentsFromSchemas(parameters: {
     schema: { [key: string]: any },
     uischema: { [key: string]: any },
   ) => any;
+  onSave: (fieldData: any, schema: string, uischema: string) => any;
   definitionData?: { [key: string]: any };
   definitionUi?: { [key: string]: any };
   hideKey?: boolean;
@@ -1095,6 +1096,7 @@ export function generateElementComponentsFromSchemas(parameters: {
     schemaData,
     uiSchemaData,
     onChange,
+    onSave,
     definitionData,
     definitionUi,
     hideKey,
@@ -1172,6 +1174,50 @@ export function generateElementComponentsFromSchemas(parameters: {
           }
           key={`${path}_${elementPropArr[index].name}`}
           TypeSpecificParameters={TypeSpecificParameters}
+          onSave={() => {
+            console.log(
+              'Card onSave called, onSave function available:',
+              !!onSave,
+            );
+
+            // Get the current field data
+            const fieldData = {
+              name: elementPropArr[index].name,
+              path: `${path}_${elementPropArr[index].name}`,
+              componentProps: Object.assign(
+                {
+                  name: elementPropArr[index].name,
+                  required: elementPropArr[index].required,
+                  hideKey,
+                  path: `${path}_${elementPropArr[index].name}`,
+                  definitionData,
+                  definitionUi,
+                  neighborNames: elementPropArr[index].neighborNames,
+                  dependents: elementPropArr[index].dependents,
+                  dependent: elementPropArr[index].dependent,
+                  parent: elementPropArr[index].parent,
+                },
+                elementPropArr[index].uiOptions,
+                elementPropArr[index].dataOptions,
+              ),
+            };
+
+            console.log('Field data prepared:', fieldData);
+
+            // Call the onSave callback if provided
+            if (onSave) {
+              console.log('Calling onSave with field data...');
+              onSave(
+                fieldData,
+                JSON.stringify(schema),
+                JSON.stringify(uischema),
+              );
+            } else {
+              console.log('onSave not available, calling onChange fallback');
+              // Fallback to triggering onChange with current schema state
+              onChange(schema, uischema);
+            }
+          }}
           onChange={(newCardObj: { [key: string]: any }) => {
             const newElementObjArr = generateElementPropsFromSchemas({
               schema,
@@ -1505,6 +1551,12 @@ export function generateElementComponentsFromSchemas(parameters: {
           name={elementProp.name}
           key={`${path}_${elementPropArr[index].name}`}
           required={elementProp.required}
+          onSave={
+            onSave
+              ? (fieldData, schema, uischema) =>
+                  onSave(fieldData, schema, uischema)
+              : undefined
+          }
           path={`${path}_${elementProp.name}`}
           definitionData={definitionData || {}}
           definitionUi={definitionUi || {}}

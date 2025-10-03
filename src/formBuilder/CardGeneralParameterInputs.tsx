@@ -1,7 +1,6 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useCallback } from 'react';
 import Select from 'react-select';
 import { Input, FormGroup, FormFeedback } from 'reactstrap';
-import classnames from 'classnames';
 import GeneralParameterInputs from './GeneralParameterInputs';
 import {
   defaultUiProps,
@@ -18,6 +17,8 @@ import type {
   CardComponentPropsType,
 } from './types';
 import Tooltip from './Tooltip';
+import QuillEditor from './QuillEditor';
+import FBCheckbox from './checkbox/FBCheckbox';
 
 // specify the inputs required for any type of object
 export default function CardGeneralParameterInputs({
@@ -39,8 +40,21 @@ export default function CardGeneralParameterInputs({
   const [descriptionState, setDescriptionState] = React.useState(
     parameters.description,
   );
+  const [isTooltipState, setIsTooltipState] = React.useState(
+    parameters.isTooltip || false,
+  );
   const [elementId] = React.useState(getRandomId());
   const categoryMap = categoryToNameMap(allFormInputs);
+
+  // Function to convert display name to camelCase for object name
+  const toCamelCase = (str: string): string => {
+    return str
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+        return index === 0 ? word.toLowerCase() : word.toUpperCase();
+      })
+      .replace(/\s+/g, '')
+      .replace(/[^a-zA-Z0-9]/g, ''); // Remove special characters
+  };
 
   const fetchLabel = (
     labelName: string,
@@ -75,6 +89,44 @@ export default function CardGeneralParameterInputs({
       .sort((a, b) => a.label.localeCompare(b.label));
   };
 
+  const handleChange = useCallback(
+    (ev: any) => {
+      const newTitle = ev.target.value;
+      setTitleState(newTitle);
+
+      // Auto-generate camelCase name
+      const newObjectName = toCamelCase(newTitle);
+
+      // Conflict check
+      let uniqueName = newObjectName;
+      if (
+        parameters.neighborNames &&
+        parameters.neighborNames.includes(newObjectName) &&
+        newObjectName !== parameters.name
+      ) {
+        let counter = 1;
+        while (
+          parameters.neighborNames.includes(`${newObjectName}${counter}`)
+        ) {
+          counter++;
+        }
+        uniqueName = `${newObjectName}${counter}`;
+      }
+
+      setKeyState(uniqueName);
+      setKeyError(null);
+    },
+    [parameters.neighborNames, parameters.name],
+  );
+
+  const handleBlur = useCallback(() => {
+    onChange({
+      ...parameters,
+      title: titleState,
+      name: keyState,
+    });
+  }, [parameters, titleState, keyState, onChange]);
+
   return (
     <React.Fragment>
       <div className='card-entry-row'>
@@ -97,34 +149,14 @@ export default function CardGeneralParameterInputs({
 
             <FormGroup>
               <Input
-                invalid={keyError !== null}
+                disabled={true}
                 value={keyState || ''}
-                placeholder='Key'
+                placeholder='Display Name'
                 type='text'
-                onChange={(ev) => setKeyState(ev.target.value)}
-                onBlur={(ev) => {
-                  const { value } = ev.target;
-                  if (
-                    value === parameters.name ||
-                    !(
-                      parameters.neighborNames &&
-                      parameters.neighborNames.includes(value)
-                    )
-                  ) {
-                    setKeyError(null);
-                    onChange({
-                      ...parameters,
-                      name: value,
-                    });
-                  } else {
-                    setKeyState(parameters.name);
-                    setKeyError(`"${value}" is already in use.`);
-                    onChange({ ...parameters });
-                  }
-                }}
                 className='card-text'
+                style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
               />
-              <FormFeedback>{keyError}</FormFeedback>
+              {keyError && <FormFeedback>{keyError}</FormFeedback>}
             </FormGroup>
           </div>
         )}
@@ -151,50 +183,14 @@ export default function CardGeneralParameterInputs({
             value={titleState || ''}
             placeholder='Title'
             type='text'
-            onChange={(ev) => setTitleState(ev.target.value)}
-            onBlur={(ev) => {
-              onChange({ ...parameters, title: ev.target.value });
-            }}
+            onChange={handleChange}
+            onBlur={handleBlur}
             className='card-text'
           />
         </div>
       </div>
       <div className='card-entry-row'>
-        <div
-          className={`card-entry ${parameters.$ref ? 'disabled-input' : ''}`}
-        >
-          <h5>
-            {`${descriptionLabel} `}
-            <Tooltip
-              text={
-                mods &&
-                mods.tooltipDescriptions &&
-                typeof mods.tooltipDescriptions.cardDescription === 'string'
-                  ? mods.tooltipDescriptions.cardDescription
-                  : 'This will appear as help text on the form'
-              }
-              id={`${elementId}-descriptioninfo`}
-              type='help'
-            />
-          </h5>
-          <FormGroup>
-            <Input
-              value={descriptionState || ''}
-              placeholder='Description'
-              type='text'
-              onChange={(ev) => setDescriptionState(ev.target.value)}
-              onBlur={(ev) => {
-                onChange({ ...parameters, description: ev.target.value });
-              }}
-              className='card-text'
-            />
-          </FormGroup>
-        </div>
-        <div
-          className={classnames('card-entry', {
-            'wide-card-entry': !showObjectNameInput,
-          })}
-        >
+        <div className='card-entry wide-card-entry'>
           <h5>
             {`${inputTypeLabel} `}
             <Tooltip
@@ -216,6 +212,8 @@ export default function CardGeneralParameterInputs({
             }}
             placeholder={inputTypeLabel}
             options={availableInputTypes()}
+            openMenuOnClick={true}
+            openMenuOnFocus={true}
             onChange={(val: any) => {
               // figure out the new 'type'
               const newCategory = val.value;
@@ -243,6 +241,50 @@ export default function CardGeneralParameterInputs({
             }}
             className='card-select'
           />
+        </div>
+      </div>
+
+      <div className='card-entry-row'>
+        <div
+          className={`card-entry wide-card-entry ${parameters.$ref ? 'disabled-input' : ''}`}
+        >
+          <h5>
+            {`${descriptionLabel} `}
+            <Tooltip
+              text={
+                mods &&
+                mods.tooltipDescriptions &&
+                typeof mods.tooltipDescriptions.cardDescription === 'string'
+                  ? mods.tooltipDescriptions.cardDescription
+                  : 'This will appear as help text on the form'
+              }
+              id={`${elementId}-descriptioninfo`}
+              type='help'
+            />
+          </h5>
+          <FormGroup>
+            <QuillEditor
+              value={descriptionState || ''}
+              placeholder='Description'
+              onChange={(value) => {
+                setDescriptionState(value);
+                onChange({ ...parameters, description: value });
+              }}
+              className='card-text'
+            />
+          </FormGroup>
+          <FormGroup>
+            <FBCheckbox
+              onChangeValue={() => {
+                const newIsTooltip = !isTooltipState;
+                setIsTooltipState(newIsTooltip);
+                onChange({ ...parameters, isTooltip: newIsTooltip });
+              }}
+              isChecked={isTooltipState}
+              label='Show description in tooltip'
+              id={`${elementId}_istooltip`}
+            />
+          </FormGroup>
         </div>
       </div>
 

@@ -191,6 +191,7 @@ export default function FormBuilder({
   uischema,
   onMount,
   onChange,
+  onSave,
   mods,
   className,
 }: {
@@ -198,6 +199,7 @@ export default function FormBuilder({
   uischema: string;
   onMount?: (parameters: InitParameters) => any;
   onChange: (schema: string, uischema: string) => any;
+  onSave: (fieldData: any, schema: string, uischema: string) => any;
   mods?: Mods;
   className?: string;
 }): ReactElement {
@@ -345,6 +347,13 @@ export default function FormBuilder({
                   uiSchemaData,
                   onChange: (newSchema, newUiSchema) =>
                     onChange(stringify(newSchema), stringify(newUiSchema)),
+                  onSave: (fieldData, schema, uischema) => {
+                    console.log(
+                      'FormBuilder onSave wrapper called with:',
+                      fieldData,
+                    );
+                    onSave(fieldData, stringify(schema), stringify(uischema));
+                  },
                   definitionData: schemaData.definitions,
                   definitionUi: uiSchemaData.definitions,
                   path: 'root',

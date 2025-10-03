@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from 'reactstrap';
 import { createUseStyles } from 'react-jss';
 import FBCheckbox from '../checkbox/FBCheckbox';
@@ -28,16 +28,17 @@ const getInputCardBodyComponent = ({ type }: { type: InputType }) =>
     parameters: CardComponentPropsType;
     onChange: (newParams: CardComponentPropsType) => void;
   }) {
+    const [defaultValue, setDefaultValue] = useState(parameters.default || '');
+
     return (
       <React.Fragment>
         <h5>Default value</h5>
         <Input
-          value={(parameters.default || '') as string | number}
+          value={defaultValue as string | number}
           placeholder='Default'
           type={type}
-          onChange={(ev) =>
-            onChange({ ...parameters, default: ev.target.value })
-          }
+          onChange={(ev) => setDefaultValue(ev.target.value)}
+          onBlur={(ev) => onChange({ ...parameters, default: ev.target.value })}
           className='card-text'
         />
       </React.Fragment>
